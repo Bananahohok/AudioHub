@@ -1,7 +1,7 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "Audio Hub: Scanner & Player",
+   Name = "Audio Hub: Optimized",
    LoadingTitle = "Loading Tools...",
    LoadingSubtitle = "by Minus",
    ConfigurationSaving = { Enabled = false }
@@ -18,7 +18,7 @@ local InputID = ""
 -- TABS
 local TabScanner = Window:CreateTab("Scanner", 4483362458)
 local TabPlayer = Window:CreateTab("Player", 6023426926)
-local TabFavorites = Window:CreateTab("Favorites", 4384403532) -- Star Icon
+local TabFavorites = Window:CreateTab("Favorites", 4384403532)
 
 -- --- FUNCTIONS ---
 
@@ -28,19 +28,9 @@ local function AddToFavorites(name, id)
         TabFavorites:CreateButton({
             Name = "🎵 " .. name .. " (ID: " .. id .. ")",
             Callback = function()
-                InputID = id
                 previewSound:Stop()
                 previewSound.SoundId = "rbxassetid://" .. id
                 previewSound:Play()
-                Rayfield:Notify({Title = "Favorites", Content = "Playing: " .. name, Duration = 3})
-            end,
-        })
-        -- Copy Option for Favorite
-        TabFavorites:CreateButton({
-            Name = " Copy ID: " .. id,
-            Callback = function()
-                setclipboard(id)
-                Rayfield:Notify({Title = "Copied", Content = "ID copied to clipboard!", Duration = 2})
             end,
         })
         return true
@@ -49,55 +39,51 @@ local function AddToFavorites(name, id)
 end
 
 -- --- SCANNER TAB ---
-TabScanner:CreateSection("Workspace Scanner")
+TabScanner:CreateSection("Quick Controls")
+
+-- Stop Button (Always at the top for easy access)
+TabScanner:CreateButton({
+   Name = " STOP ALL PREVIEWS",
+   Callback = function()
+       previewSound:Stop()
+       Rayfield:Notify({Title = "Audio", Content = "Playback stopped.", Duration = 1.5})
+   end,
+})
 
 TabScanner:CreateButton({
-   Name = "🔍 Scan & List Sounds",
+   Name = "🔍 Scan Workspace Sounds",
    Callback = function()
-       -- Scans every object in the Workspace
        local found = false
        for _, v in pairs(game:GetService("Workspace"):GetDescendants()) do
            if v:IsA("Sound") then
                found = true
                local cleanID = v.SoundId:match("%d+")
                if cleanID then
-                   TabScanner:CreateSection("Found: " .. v.Name)
+                   TabScanner:CreateSection("Audio: " .. v.Name)
                    
-                   -- Play Button
+                   -- Combined Play & Copy to reduce UI lag
                    TabScanner:CreateButton({
-                       Name = " Play: " .. v.Name,
+                       Name = " Play & Copy ID: " .. cleanID,
                        Callback = function()
                            previewSound:Stop()
                            previewSound.SoundId = "rbxassetid://" .. cleanID
                            previewSound:Play()
-                       end
-                   })
-
-                   -- Copy Button
-                   TabScanner:CreateButton({
-                       Name = " Copy ID",
-                       Callback = function()
                            setclipboard(cleanID)
-                           Rayfield:Notify({Title = "Success", Content = "ID Copied!", Duration = 2})
+                           Rayfield:Notify({Title = "Scanner", Content = "Playing & ID Copied!", Duration = 1.5})
                        end
                    })
 
-                   -- Favorite Button
                    TabScanner:CreateButton({
                        Name = " Add to Favorites",
                        Callback = function()
-                           local added = AddToFavorites(v.Name, cleanID)
-                           if added then
-                               Rayfield:Notify({Title = "Favorites", Content = "Added to your list!", Duration = 2})
-                           else
-                               Rayfield:Notify({Title = "Favorites", Content = "Already in favorites.", Duration = 2})
+                           if AddToFavorites(v.Name, cleanID) then
+                               Rayfield:Notify({Title = "Success", Content = "Saved to favorites!", Duration = 1.5})
                            end
                        end
                    })
                end
            end
        end
-
        if not found then
            Rayfield:Notify({Title = "Scanner", Content = "No sounds found.", Duration = 3})
        end
@@ -105,12 +91,11 @@ TabScanner:CreateButton({
 })
 
 -- --- PLAYER TAB ---
-TabPlayer:CreateSection("Audio Controls")
+TabPlayer:CreateSection("Manual Player")
 
 TabPlayer:CreateInput({
-   Name = "Sound ID",
-   PlaceholderText = "Paste ID here...",
-   RemoveTextAfterFocusLost = false,
+   Name = "Audio ID",
+   PlaceholderText = "Paste ID...",
    Callback = function(Text)
        InputID = Text:match("%d+")
    end,
@@ -138,7 +123,6 @@ TabPlayer:CreateSlider({
    Name = "Volume",
    Range = {0, 10},
    Increment = 0.5,
-   Suffix = "Vol",
    CurrentValue = 1,
    Callback = function(Value)
        previewSound.Volume = Value
@@ -146,5 +130,4 @@ TabPlayer:CreateSlider({
 })
 
 -- --- FAVORITES TAB ---
-TabFavorites:CreateSection("Your Saved Songs")
-TabFavorites:CreateLabel("Click a song to play or copy its ID below.")
+TabFavorites:CreateSection("Saved Audios")
