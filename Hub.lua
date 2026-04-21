@@ -1,7 +1,7 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "AudioHub",
+   Name = "Audio Hub",
    LoadingTitle = "Loading Tools...",
    LoadingSubtitle = "by Minus",
    ConfigurationSaving = { Enabled = false }
@@ -26,11 +26,10 @@ local function AddToFavorites(name, id)
     if not Favorites[id] then
         Favorites[id] = true
         
-        -- Create a section to group the specific audio and its remove button
         local FavSection = TabFavorites:CreateSection("Audio: " .. name)
         
         local PlayButton = TabFavorites:CreateButton({
-            Name = "Play: " .. name .. " (ID: " .. id .. ")",
+            Name = name .. " (ID: " .. id .. ")",
             Callback = function()
                 previewSound:Stop()
                 previewSound.SoundId = "rbxassetid://" .. id
@@ -38,18 +37,15 @@ local function AddToFavorites(name, id)
             end,
         })
 
-        local RemoveButton = TabFavorites:CreateButton({
-            Name = "Remove: " .. name,
+        local UnfavButton = TabFavorites:CreateButton({
+            Name = "Unfavorite",
             Callback = function()
                 Favorites[id] = nil
                 PlayButton:Destroy()
                 FavSection:Destroy()
-                -- Removing the button itself
-                -- Some Rayfield versions require a specific cleanup, but Destroy() is the standard.
             end,
         })
         
-        -- Store the button in the table so we can track it if needed
         return true
     end
     return false
@@ -58,9 +54,8 @@ end
 -- --- SCANNER TAB ---
 TabScanner:CreateSection("Quick Controls")
 
--- Stop Button (Always at the top for easy access)
 TabScanner:CreateButton({
-   Name = " STOP ALL PREVIEWS",
+   Name = "STOP ALL PREVIEWS",
    Callback = function()
        previewSound:Stop()
        Rayfield:Notify({Title = "Audio", Content = "Playback stopped.", Duration = 1.5})
@@ -68,7 +63,7 @@ TabScanner:CreateButton({
 })
 
 TabScanner:CreateButton({
-   Name = "🔍 Scan Workspace Sounds",
+   Name = "Scan Workspace Sounds",
    Callback = function()
        local found = false
        for _, v in pairs(game:GetService("Workspace"):GetDescendants()) do
@@ -78,9 +73,8 @@ TabScanner:CreateButton({
                if cleanID then
                    TabScanner:CreateSection("Audio: " .. v.Name)
                    
-                   -- Combined Play & Copy to reduce UI lag
                    TabScanner:CreateButton({
-                       Name = " Play & Copy ID: " .. cleanID,
+                       Name = "Play & Copy ID: " .. cleanID,
                        Callback = function()
                            previewSound:Stop()
                            previewSound.SoundId = "rbxassetid://" .. cleanID
@@ -91,7 +85,7 @@ TabScanner:CreateButton({
                    })
 
                    TabScanner:CreateButton({
-                       Name = " Add to Favorites",
+                       Name = "Add to Favorites",
                        Callback = function()
                            if AddToFavorites(v.Name, cleanID) then
                                Rayfield:Notify({Title = "Success", Content = "Saved to favorites!", Duration = 1.5})
@@ -119,7 +113,7 @@ TabPlayer:CreateInput({
 })
 
 TabPlayer:CreateButton({
-   Name = " Play Audio",
+   Name = "Play Audio",
    Callback = function()
        if InputID and InputID ~= "" then
            previewSound:Stop()
@@ -130,7 +124,7 @@ TabPlayer:CreateButton({
 })
 
 TabPlayer:CreateButton({
-   Name = " Stop Audio",
+   Name = "Stop Audio",
    Callback = function()
        previewSound:Stop()
    end,
