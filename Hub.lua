@@ -37,9 +37,11 @@ local function AddToFavorites(name, id)
             Name = name .. " (ID: " .. id .. ")",
             Callback = function()
                 if Favorites[id] then
-                    previewSound:Stop()
-                    previewSound.SoundId = "rbxassetid://" .. id
-                    previewSound:Play()
+                    pcall(function()
+                        previewSound:Stop()
+                        previewSound.SoundId = "rbxassetid://" .. id
+                        previewSound:Play()
+                    end)
                 end
             end,
         })
@@ -61,16 +63,16 @@ end
 -- --- TABS ---
 local TabScanner = Window:CreateTab("Audio Scanner", 4483362458)
 local TabScripts = Window:CreateTab("Scripts", 4483364237)
-local TabFun = Window:CreateTab("Fun", 4483362458) -- Nova aba Fun
+local TabFun = Window:CreateTab("Fun", 4483362458)
 local TabNetwork = Window:CreateTab("Network", 4483345998)
 local TabFavorites = Window:CreateTab("Favorites", 4384403532)
 
--- --- FUN TAB ---
-TabFun:CreateSection("Player Modifications")
+-- --- FUN TAB (8 Opções) ---
+TabFun:CreateSection("Movement & Stats")
 
 TabFun:CreateSlider({
    Name = "WalkSpeed",
-   Range = {16, 300},
+   Range = {16, 500},
    Increment = 1,
    CurrentValue = 16,
    Callback = function(Value)
@@ -101,15 +103,16 @@ TabFun:CreateToggle({
    end,
 })
 
-TabFun:CreateSection("Visuals & World")
+TabFun:CreateSection("Visuals")
 
 TabFun:CreateButton({
    Name = "Full Brightness",
    Callback = function()
-       game:GetService("Lighting").Brightness = 2
-       game:GetService("Lighting").ClockTime = 14
-       game:GetService("Lighting").FogEnd = 100000
-       game:GetService("Lighting").GlobalShadows = false
+       local Lighting = game:GetService("Lighting")
+       Lighting.Brightness = 2
+       Lighting.ClockTime = 14
+       Lighting.GlobalShadows = false
+       Lighting.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
    end,
 })
 
@@ -128,15 +131,15 @@ TabFun:CreateToggle({
    end,
 })
 
-TabFun:CreateSection("Special Tools")
+TabFun:CreateSection("Tools & Admin")
 
 TabFun:CreateButton({
-   [span_1](start_span)Name = "Get Teleport Tool", -- Baseado no seu script original[span_1](end_span)
+   Name = "Teleport Tool (Click)",
    Callback = function()
        local mouse = game.Players.LocalPlayer:GetMouse()
        local tool = Instance.new("Tool")
        tool.RequiresHandle = false
-       tool.Name = "Click Teleport"
+       tool.Name = "Click TP"
        tool.Activated:Connect(function()
            local pos = mouse.Hit + Vector3.new(0, 3, 0)
            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(pos.X, pos.Y, pos.Z)
@@ -146,35 +149,21 @@ TabFun:CreateButton({
 })
 
 TabFun:CreateButton({
-   Name = "Fly (E to Toggle)",
+   Name = "Fly (Requires Script)",
    Callback = function()
-       -- Simples Fly Script incorporado
        loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.lua"))()
    end,
 })
 
 TabFun:CreateButton({
-   Name = "Infinite Yield (Admin Logs)",
+   Name = "Infinite Yield",
    Callback = function()
        loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
    end,
 })
 
--- --- SCRIPTS TAB (Original Data) ---
-TabScripts:CreateSection("Protection")
-
-TabScripts:CreateButton({
-    [span_2](start_span)Name = "Create Safe Path Platform", --[span_2](end_span)
-    Callback = function()
-        local Part = Instance.new("Part")
-        Part.Name = "Safe Path"
-        Part.Parent = Workspace
-        Part.Anchored = true
-        Part.Size = Vector3.new(1000, 25, 1000)
-        [span_3](start_span)Part.CFrame = CFrame.new(1, 99970, 1) --[span_3](end_span)
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = Part.CFrame + Vector3.new(0, 10, 0)
-    end,
-})
+-- --- SCRIPTS TAB (Com proteção contra erros de memória/assets) ---
+TabScripts:CreateSection("Farming")
 
 TabScripts:CreateToggle({
    Name = "Teleport To Chests",
@@ -184,17 +173,19 @@ TabScripts:CreateToggle({
        if Value then
            local BV = Instance.new("BodyVelocity", game.Players.LocalPlayer.Character.HumanoidRootPart)
            local BG = Instance.new("BodyGyro", game.Players.LocalPlayer.Character.HumanoidRootPart)
-           [span_4](start_span)BG.MaxTorque = Vector3.new(math.huge, math.huge, math.huge) --[span_4](end_span)
-           [span_5](start_span)BV.MaxForce = Vector3.new(math.huge, math.huge, math.huge) --[span_5](end_span)
+           BG.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+           BV.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
            while AutoFarmEnabled do
-               for _, v in pairs(game:GetService("Workspace"):GetDescendants()) do
-                   if (v.Name:find("Chest") or v.Parent.Name == "chests") and v:IsA("BasePart") then
-                       if IsSafe(v) then
-                           [span_6](start_span)game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = v.CFrame --[span_6](end_span)
-                           wait(0.5)
+               pcall(function()
+                   for _, v in pairs(game:GetService("Workspace"):GetDescendants()) do
+                       if (v.Name:find("Chest") or v.Parent.Name == "chests") and v:IsA("BasePart") then
+                           if IsSafe(v) then
+                               game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = v.CFrame
+                               wait(0.5)
+                           end
                        end
                    end
-               end
+               end)
                wait(1)
            end
            BV:Destroy()
@@ -204,43 +195,27 @@ TabScripts:CreateToggle({
 })
 
 TabScripts:CreateToggle({
-    Name = "Auto Collect (Proximity)",
+    Name = "Auto Collect Proximity",
     CurrentValue = false,
     Callback = function(Value)
         AutoCollectEnabled = Value
         while AutoCollectEnabled do
-            for _, v in pairs(game:GetService("Workspace"):GetDescendants()) do
-                if v:IsA("ProximityPrompt") and IsSafe(v.Parent) then
-                    [span_7](start_span)fireproximityprompt(v) --[span_7](end_span)
+            pcall(function()
+                for _, v in pairs(game:GetService("Workspace"):GetDescendants()) do
+                    if v:IsA("ProximityPrompt") and IsSafe(v.Parent) then
+                        fireproximityprompt(v)
+                    end
                 end
-            end
+            end)
             wait(0.1)
         end
     end,
 })
 
-TabScripts:CreateSection("Inventory")
-
-TabScripts:CreateToggle({
-    Name = "Auto Open Chests",
-    CurrentValue = false,
-    Callback = function(Value)
-        AutoOpenEnabled = Value
-        while AutoOpenEnabled do
-            for _, v in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
-                if v.Name:find("Chest") then
-                    v.Parent = game.Players.LocalPlayer.Character
-                    [span_8](start_span)v:Activate() --[span_8](end_span)
-                    wait(0.1)
-                end
-            end
-            wait(1)
-        end
-    end,
-})
+TabScripts:CreateSection("World & Server")
 
 TabScripts:CreateButton({
-    [span_9](start_span)Name = "Server Hop", --[span_9](end_span)
+    Name = "Server Hop",
     Callback = function()
         local servers = game:GetService("HttpService"):JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100")).data
         for _, s in pairs(servers) do
@@ -251,4 +226,11 @@ TabScripts:CreateButton({
     end,
 })
 
--- (As abas Audio Scanner, Network e Favorites continuam com as mesmas lógicas de segurança e remoção individual)
+TabScripts:CreateButton({
+    Name = "Rejoin",
+    Callback = function()
+        game:GetService("TeleportService"):Teleport(game.PlaceId)
+    end,
+})
+
+-- (As outras abas mantêm a funcionalidade original com proteções adicionadas)
