@@ -38,11 +38,17 @@ local function AddToFavorites(name, id)
         })
 
         local UnfavButton = TabFavorites:CreateButton({
-            Name = "Unfavorite",
+            Name = "Remove Favorite: " .. id,
             Callback = function()
                 Favorites[id] = nil
-                PlayButton:Destroy()
-                FavSection:Destroy()
+                -- Note: If Destroy() fails in your Rayfield version, 
+                -- the entry remains until the script is reloaded.
+                pcall(function()
+                    PlayButton:Destroy()
+                    UnfavButton:Destroy()
+                    FavSection:Destroy()
+                end)
+                Rayfield:Notify({Title = "Favorites", Content = "Item removed", Duration = 1.5})
             end,
         })
         
