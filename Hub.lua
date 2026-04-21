@@ -3,107 +3,139 @@ local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Window = Rayfield:CreateWindow({
    Name = "Audio Hub: Scanner & Player",
    LoadingTitle = "Loading Tools...",
-   LoadingSubtitle = "by Gemini",
+   LoadingSubtitle = "by Minus",
    ConfigurationSaving = { Enabled = false }
 })
 
--- Global variable for the Preview Sound
+-- Variables
 local previewSound = Instance.new("Sound")
 previewSound.Parent = game.Workspace
 previewSound.Name = "Gemini_Preview_Audio"
 
--- SCANNER TAB
-local TabScanner = Window:CreateTab("Scanner", 4483362458) -- Search Icon
+local Favorites = {}
+local InputID = ""
 
-TabScanner:CreateSection("Workspace Tools")
+-- TABS
+local TabScanner = Window:CreateTab("Scanner", 4483362458)
+local TabPlayer = Window:CreateTab("Player", 6023426926)
+local TabFavorites = Window:CreateTab("Favorites", 4384403532) -- Star Icon
+
+-- --- FUNCTIONS ---
+
+local function AddToFavorites(name, id)
+    if not Favorites[id] then
+        Favorites[id] = name
+        TabFavorites:CreateButton({
+            Name = "🎵 " .. name .. " (ID: " .. id .. ")",
+            Callback = function()
+                InputID = id
+                previewSound:Stop()
+                previewSound.SoundId = "rbxassetid://" .. id
+                previewSound:Play()
+                Rayfield:Notify({Title = "Favorites", Content = "Playing: " .. name, Duration = 3})
+            end,
+        })
+        -- Copy Option for Favorite
+        TabFavorites:CreateButton({
+            Name = " Copy ID: " .. id,
+            Callback = function()
+                setclipboard(id)
+                Rayfield:Notify({Title = "Copied", Content = "ID copied to clipboard!", Duration = 2})
+            end,
+        })
+        return true
+    end
+    return false
+end
+
+-- --- SCANNER TAB ---
+TabScanner:CreateSection("Workspace Scanner")
 
 TabScanner:CreateButton({
-   Name = "Scan Workspace & Copy IDs",
+   Name = "🔍 Scan & List Sounds",
    Callback = function()
-       local soundList = "List of Sounds Found:\n\n"
-       local count = 0
-       
        -- Scans every object in the Workspace
+       local found = false
        for _, v in pairs(game:GetService("Workspace"):GetDescendants()) do
            if v:IsA("Sound") then
-               count = count + 1
-               soundList = soundList .. string.format("Name: %s | ID: %s\n", v.Name, v.SoundId)
+               found = true
+               local cleanID = v.SoundId:match("%d+")
+               if cleanID then
+                   TabScanner:CreateSection("Found: " .. v.Name)
+                   
+                   -- Play Button
+                   TabScanner:CreateButton({
+                       Name = " Play: " .. v.Name,
+                       Callback = function()
+                           previewSound:Stop()
+                           previewSound.SoundId = "rbxassetid://" .. cleanID
+                           previewSound:Play()
+                       end
+                   })
+
+                   -- Copy Button
+                   TabScanner:CreateButton({
+                       Name = " Copy ID",
+                       Callback = function()
+                           setclipboard(cleanID)
+                           Rayfield:Notify({Title = "Success", Content = "ID Copied!", Duration = 2})
+                       end
+                   })
+
+                   -- Favorite Button
+                   TabScanner:CreateButton({
+                       Name = " Add to Favorites",
+                       Callback = function()
+                           local added = AddToFavorites(v.Name, cleanID)
+                           if added then
+                               Rayfield:Notify({Title = "Favorites", Content = "Added to your list!", Duration = 2})
+                           else
+                               Rayfield:Notify({Title = "Favorites", Content = "Already in favorites.", Duration = 2})
+                           end
+                       end
+                   })
+               end
            end
        end
 
-       if count > 0 then
-           -- Copies to clipboard
-           setclipboard(soundList)
-           Rayfield:Notify({
-               Title = "Success!",
-               Content = count .. " sounds copied to your clipboard.",
-               Duration = 5,
-               Image = 4483362458,
-           })
-       else
-           Rayfield:Notify({
-               Title = "Scanner",
-               Content = "No sounds were found in Workspace.",
-               Duration = 5,
-           })
+       if not found then
+           Rayfield:Notify({Title = "Scanner", Content = "No sounds found.", Duration = 3})
        end
    end,
 })
 
--- PLAYER TAB
-local TabPlayer = Window:CreateTab("Player", 6023426926) -- Speaker Icon
-
-local InputID = ""
-
+-- --- PLAYER TAB ---
 TabPlayer:CreateSection("Audio Controls")
 
 TabPlayer:CreateInput({
    Name = "Sound ID",
-   PlaceholderText = "Paste ID or Link here...",
+   PlaceholderText = "Paste ID here...",
    RemoveTextAfterFocusLost = false,
    Callback = function(Text)
-       -- Automatically filters only the numbers (removes 'rbxassetid://', etc.)
        InputID = Text:match("%d+")
    end,
 })
 
 TabPlayer:CreateButton({
-   Name = "▶️ Play Audio",
+   Name = " Play Audio",
    Callback = function()
        if InputID and InputID ~= "" then
            previewSound:Stop()
            previewSound.SoundId = "rbxassetid://" .. InputID
            previewSound:Play()
-           
-           Rayfield:Notify({
-               Title = "Audio Player",
-               Content = "Playing ID: " .. InputID,
-               Duration = 3,
-           })
-       else
-           Rayfield:Notify({
-               Title = "Error",
-               Content = "Please enter a valid ID first.",
-               Duration = 3,
-           })
        end
    end,
 })
 
 TabPlayer:CreateButton({
-   Name = "🛑 Stop Audio",
+   Name = " Stop Audio",
    Callback = function()
        previewSound:Stop()
-       Rayfield:Notify({
-           Title = "Audio Player",
-           Content = "Playback stopped.",
-           Duration = 2,
-       })
    end,
 })
 
 TabPlayer:CreateSlider({
-   Name = "Volume Control",
+   Name = "Volume",
    Range = {0, 10},
    Increment = 0.5,
    Suffix = "Vol",
@@ -113,4 +145,6 @@ TabPlayer:CreateSlider({
    end,
 })
 
-TabPlayer:CreateLabel("The player works with any Roblox Audio ID.")
+-- --- FAVORITES TAB ---
+TabFavorites:CreateSection("Your Saved Songs")
+TabFavorites:CreateLabel("Click a song to play or copy its ID below.")
