@@ -1,7 +1,7 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "Audio Hub: Optimized",
+   Name = "AudioHub",
    LoadingTitle = "Loading Tools...",
    LoadingSubtitle = "by Minus",
    ConfigurationSaving = { Enabled = false }
@@ -24,15 +24,32 @@ local TabFavorites = Window:CreateTab("Favorites", 4384403532)
 
 local function AddToFavorites(name, id)
     if not Favorites[id] then
-        Favorites[id] = name
-        TabFavorites:CreateButton({
-            Name = "🎵 " .. name .. " (ID: " .. id .. ")",
+        Favorites[id] = true
+        
+        -- Create a section to group the specific audio and its remove button
+        local FavSection = TabFavorites:CreateSection("Audio: " .. name)
+        
+        local PlayButton = TabFavorites:CreateButton({
+            Name = "Play: " .. name .. " (ID: " .. id .. ")",
             Callback = function()
                 previewSound:Stop()
                 previewSound.SoundId = "rbxassetid://" .. id
                 previewSound:Play()
             end,
         })
+
+        local RemoveButton = TabFavorites:CreateButton({
+            Name = "Remove: " .. name,
+            Callback = function()
+                Favorites[id] = nil
+                PlayButton:Destroy()
+                FavSection:Destroy()
+                -- Removing the button itself
+                -- Some Rayfield versions require a specific cleanup, but Destroy() is the standard.
+            end,
+        })
+        
+        -- Store the button in the table so we can track it if needed
         return true
     end
     return false
